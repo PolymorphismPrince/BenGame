@@ -8,6 +8,7 @@ var handImg = new Image();
 var diagonal = false;
 var turn = 0;
 var lastTurn = 1;
+var theException = 0;
 var offsetX = 0;;
 var offsetY = 0;
 var unswitching = false;
@@ -30,10 +31,26 @@ document.body.addEventListener("click", function (event) {
         document.location.reload();
     }
     if (moving || switching || players[turn].controlMethod != "mouse") {return;}
+    
     var x = Math.round((event.clientX - offsetX) / canvasScale );
     var y = Math.round((event.clientY - offsetY) / canvasScale );
     var yMin = turn * 800;
     var yMax = (turn + 1) * 800;
+
+    if (theException) {
+        if (x > 650 && y > 760 && x < 800 && y < 810) {
+            players[turn].move(5);
+            theException = false;
+        }
+
+        if (x > 820 && y > 760 && x < 970 && y < 810) {
+            theException = false;
+            turn = (turn == 0) ? 1 : 0;
+        }
+
+        return;
+    }
+
     if (y > yMin && y < yMax && x < 1600) {
         if (players[turn].selectedHand == 0) {
             players[turn].selectedHand = (x > 800) ? 2 : 1;
@@ -91,9 +108,8 @@ function Player (playerNum) {
             }
         }
         else {
-            var tests = [[0,2],[0,3],[1,1],[1,2],[1,3],[1,4],[2,2],[2,3],[2,4],[3,3]];
+            var tests = [[0,2],[0,3],[0,4],[1,1],[1,2],[1,3],[1,4],[2,2],[2,3],[2,4],[3,3]];
             for (let i = 0; i < tests.length; i ++) {
-                console.log(i);
                 if (testHands(...tests[i])) {
                     switching = true;
                     return;
@@ -132,18 +148,20 @@ function Player (playerNum) {
 
 
     this.finishedSwitching = function () {
-        var tests = [[0,2],[0,3],[1,1],[1,2],[1,3],[1,4],[2,2],[2,3],[2,4],[3,3]];
-        var answers = [[1,1],[1,2],[2,0],[3,0],[2,2],[2,3],[1,3],[1,4],[3,3],[2,4]];
+        var tests = [[0,2],[0,3],[0,4],[1,1],[1,2],[1,3],[1,4],[2,2],[2,3],[2,4],[3,3]];
+        var answers = [[1,1],[1,2],[2,2],[2,0],[3,0],[2,2],[2,3],[1,3],[1,4],[3,3],[2,4]];
         for (let i = 0; i < tests.length; i++) {
             if (testHands(...tests[i])) {
                 this.hands = answers[i].slice();
-                
+                if (i == 2) {
+                    theException = turn + 1;
+                }
                 return;
             }
         }
     }
 
-    this.hands = [1,1];
+    this.hands = [4,0];
 
     this.selectedHand = 0;
 }
@@ -188,7 +206,7 @@ function drawImage(image, x, y, degrees,flip){
   }
 
 
-setInterval(drawImages,100);
+var interval = setInterval(drawImages,100);
 
 
 
@@ -258,7 +276,8 @@ function drawImages () {
                     switching = false;
                     unswitching = false;
                     currentPlayer.selectedHand = 0;
-                    turn = (turn == 0) ? 1 : 0;
+                    if (!theException) {turn = (turn == 0) ? 1 : 0;}
+
                 }
                 else if (switching == true) {
                     movingHandX += movingSpeed;
@@ -281,8 +300,23 @@ function drawImages () {
         
     
     }
+
+    if (theException == turn + 1) {
+        ctx.font="20px Verdana";
+        ctx.fillStyle = "rgb(0,100,0)";
+        ctx.fillRect(650,750,150,60);
+        ctx.fillRect(820,750,150,60);
+        ctx.fillStyle = "rgb(255,255,255)";
+        ctx.fillText("Switch Again",660,790);
+        ctx.fillText("End Turn",850,790);
+        ctx.fillStyle = "rgb(0,0,0)";
+        ctx.font="45px Verdana";
+    }
+
+    
     
     if (lastTurn != turn) {
+        if (turn == 0 && players[turn].controlMethod != "mouse") {control();}
         ctx.font="45px Verdana";
         ctx.clearRect(1600,0,400,1600);
         ctx.fillText("-Player " + (turn + 1) + "'s Turn",1600,800 * turn + 400);
