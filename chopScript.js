@@ -161,7 +161,7 @@ function Player (playerNum) {
         }
     }
 
-    this.hands = [4,0];
+    this.hands = [1,1];
 
     this.selectedHand = 0;
 }
